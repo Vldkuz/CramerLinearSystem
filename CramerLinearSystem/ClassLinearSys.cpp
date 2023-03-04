@@ -8,19 +8,39 @@ double* SummStrScalar(double* first, double* second, double scale, size_t size) 
 	return second;
 }
 
+void swapstr(double* &first, double* &second)
+{
+	double* temp = first;
+	first = second;
+	second = temp;
+}
+
 double GetDetMatrix(Matrix& temp) {
+	size_t k = 0;
+
 	for (size_t i = 0; i < temp.order; ++i)
 	{
 		for (size_t num_str = i + 1; num_str < temp.order; ++num_str) {
 			if (temp.matrix[i][i] == 0)
-				continue;
+			{
+				size_t j = i + 1;
+				for (; j < temp.order; ++j) {
+					if (temp.matrix[j][i] != 0) {
+						swapstr(temp.matrix[i], temp.matrix[j]);
+						++k;
+						break;
+					}
+				}
+				if (j == temp.order)
+					return 0;
+			}
 
 			double scale = -temp.matrix[num_str][i] / temp.matrix[i][i];
 			temp.matrix[num_str] = SummStrScalar(temp.matrix[i], temp.matrix[num_str], scale, temp.order);
 		}
 	}
 
-	double Det = 1;
+	double Det = (k % 2 == 0)? 1 : -1;
 	for (size_t i = 0; i < temp.order; ++i)
 	{
 		Det *= temp.matrix[i][i];

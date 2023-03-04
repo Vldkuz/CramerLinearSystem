@@ -11,7 +11,7 @@ int main()
 	double detM = System.GetDetMainMatrix();
 	size_t count_unknown = System.GetCountUnknown();
 	double* detS = new double[count_unknown];
-
+	std::cout << detM << std::endl;
 	for (size_t i = 0; i < count_unknown; ++i)
 	{
 		detS[i] = System.GetDetExtMatrix(i);
