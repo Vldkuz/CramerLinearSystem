@@ -1,45 +1,160 @@
 #include "ClassLinearSys.h"
+#include <cstringt.h>
+#include <iostream>
+
+double* SummStrScalar(double* first, double* second, double scale, size_t size) {
+	for (size_t i = 0; i < size; ++i)
+		second[i] += scale * first[i];
+	return second;
+}
+
+double GetDetMatrix(Matrix& temp) {
+	for (size_t i = 0; i < temp.order; ++i)
+	{
+		for (size_t num_str = i + 1; num_str < temp.order; ++num_str) {
+			if (temp.matrix[i][i] == 0)
+				continue;
+
+			double scale = -temp.matrix[num_str][i] / temp.matrix[i][i];
+			temp.matrix[num_str] = SummStrScalar(temp.matrix[i], temp.matrix[num_str], scale, temp.order);
+		}
+	}
+
+	double Det = 1;
+	for (size_t i = 0; i < temp.order; ++i)
+	{
+		Det *= temp.matrix[i][i];
+	}
+
+	if (Det == -0)
+		Det = 0;
+
+	return Det;
+}
+
+LinearSystemWork::LinearSystemWork(std::ifstream& file)
+{
+	size_t n;
+	file >> n;
+	this->MainSystem = new LinearSys(n);
+
+	for (size_t i = 0; i < n; ++i) {
+		for (size_t j = 0; j < n + 1; ++j) {
+
+			if (j == n)
+				file >> this->MainSystem->leisure_factors->arr[i];
+			else
+				file >> this->MainSystem->main->matrix[i][j];
+		}
+	}
+}
 
 double LinearSystemWork::GetDetMainMatrix()
 {
-	double summ = 0;
-	double** matrix = MainSystem.main.matrix;
+	Matrix temp(*(this->MainSystem->main));
+	return GetDetMatrix(temp);
+}
 
-	if (MainSystem.main.order == 1)
+LinearSystemWork::~LinearSystemWork()
+{
+	this->MainSystem->~LinearSys();
+}
+
+void LinearSystemWork::GetMainSystemMat()
+{
+	for (size_t i = 0; i < this->MainSystem->main->order; ++i)
 	{
-		summ += matrix[0][0];
-		return summ;
+		for (size_t j = 0; j < this->MainSystem->main->order + 1; ++j)
+		{
+			if (j == this->MainSystem->main->order)
+				std::cout << this->MainSystem->leisure_factors->arr[i];
+			else {
+				std::cout << this->MainSystem->main->matrix[i][j];
+			}
+		}
+
+		std::cout << std::endl;
 	}
-
-	else if (MainSystem.main.order == 2) {
-		summ += matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0];
-		return summ;
-	}
-
-
-	summ += GetDetMainMatrix();
 }
 
-Matrix* LinearSystemWork::GetLowMinorMatrix(double** matrix,size_t j)
+size_t LinearSystemWork::GetCountUnknown()
 {
-	Matrix Minor;
-	Minor.order = 
-
+	return this->MainSystem->leisure_factors->size;
 }
 
-double pow(double number, size_t degree) {
-	double number_t = 1;
-	while (degree > 0) {
-		number_t *= number;
-		--degree;
-	}
-	return number_t;
-}
-
-
-double LinearSystemWork::GetElemMul(size_t i, size_t j)
+double LinearSystemWork::GetDetExtMatrix(size_t j)
 {
-	return pow(-1, 1 + j) * MainSystem.main.matrix[i][j];
+	Matrix temp(*(this->MainSystem->main));
+	for (size_t i = 0; i < temp.order; ++i)
+		temp.matrix[i][j] = this->MainSystem->leisure_factors->arr[i];
+	return GetDetMatrix(temp);
 }
 
 
+Matrix::Matrix(size_t order)
+{
+	this->order = order;
+	this->matrix = new double* [order];
+	for (size_t i = 0; i < order; ++i)
+		this->matrix[i] = new double[order];
+}
+
+Matrix::Matrix(Matrix& A)
+{
+	this->order = A.order;
+	this->matrix = new double* [order];
+	for (size_t i = 0; i < order; ++i)
+		this->matrix[i] = new double[order];
+
+	for (size_t i = 0; i < A.order; ++i) {
+		for (size_t j = 0; j < A.order; ++j) {
+			this->matrix[i][j] = A.matrix[i][j];
+		}
+	}
+}
+
+Matrix::~Matrix()
+{
+	for (size_t i = 0; i < this->order; ++i)
+		delete[] this->matrix[i];
+	this->order = 0;
+	delete[] this->matrix;
+}
+
+
+
+Column::Column(size_t size)
+{
+	this->arr = new double[size];
+	this->size = size;
+}
+
+Column::Column(Column& A)
+{
+	this->size = A.size;
+	this->arr = A.arr;
+}
+
+Column::~Column()
+{
+	this->size = 0;
+	delete this->arr;
+}
+
+LinearSys::LinearSys()
+{
+	this->main = nullptr;
+	this->leisure_factors = nullptr;
+}
+
+LinearSys::LinearSys(size_t order)
+{
+	this->main = new Matrix(order);
+	this->leisure_factors = new Column(order);
+}
+
+LinearSys::~LinearSys()
+{
+	main->~Matrix();
+	leisure_factors->~Column();
+}

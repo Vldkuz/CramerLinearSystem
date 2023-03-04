@@ -1,28 +1,40 @@
 #pragma once
+#include <fstream>
 
 struct Matrix {
+	Matrix(size_t order);
+	Matrix(Matrix& A);
 	double** matrix;
 	size_t order;
+	~Matrix();
+
 };
 
 struct Column {
+	Column(size_t size);
+	Column(Column& A);
 	double* arr;
 	size_t size;
+	~Column();
 };
 
 struct LinearSys
 {
-	Matrix main;
-	Column leisure_factors;
-	size_t count_unknown;
+	LinearSys();
+	LinearSys(size_t order);
+	Matrix *main;
+	Column *leisure_factors;
+	~LinearSys();    
 };
 
 class LinearSystemWork {
 public:
+	LinearSystemWork(std::ifstream& file);
+	void GetMainSystemMat();
+	size_t GetCountUnknown();
 	double GetDetMainMatrix();
-	Matrix* GetLowMinorMatrix(double** matrix, size_t j);
-	double GetElemMul(size_t i, size_t j);
-
+	double GetDetExtMatrix(size_t j);
+	~LinearSystemWork();
 private:
-	LinearSys MainSystem;
+	LinearSys* MainSystem;
 };
